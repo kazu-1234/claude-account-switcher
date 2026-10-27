@@ -24,8 +24,27 @@ function saveCache(cache) {
 
 // ---------- HTTP ----------
 
+// fetch を 1 回呼ぶ。接続できなかったときの Node の英語メッセージ（"fetch failed" 等）は日本語に置き換える
+async function fetchOnce(url, options) {
+  try {
+    return await fetch(url, { ...options, signal: AbortSignal.timeout(C.HTTP_TIMEOUT_MS) });
+  } catch (e) {
+    const err = new Error(e?.name === 'TimeoutError' ? '通信タイムアウト' : '通信エラー');
+    err.network = true; // サーバーまで届かなかった印（再試行してよい失敗）
+    throw err;
+  }
+}
+
 async function httpJson(url, options) {
-  const res = await fetch(url, { ...options, signal: AbortSignal.timeout(C.HTTP_TIMEOUT_MS) });
+  let res;
+  try {
+    res = await fetchOnce(url, options);
+  } catch (e) {
+    if (!e.network) throw e;
+    // 一時的な切断のことが多いので、少し待って 1 回だけやり直す（それでも駄目なら呼び出し側でバックオフ）
+    await new Promise(r => setTimeout(r, C.HTTP_RETRY_DELAY_MS));
+    res = await fetchOnce(url, options);
+  }
   const text = await res.text();
   let body = null;
   try { body = JSON.parse(text); } catch { /* JSON でない応答（HTML のエラーページ等） */ }
