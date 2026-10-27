@@ -1,0 +1,68 @@
+/* サイドバーの見た目。色は VS Code のテーマ変数を使い、ライト／ダークどちらでも馴染むようにする */
+
+/* ===== 調整値 ===== */
+:root {
+  --gap: 8px;
+  --radius: 6px;
+  --bar-height: 6px;
+  --font-small: 0.9em;
+}
+
+body {
+  padding: var(--gap);
+  color: var(--vscode-foreground);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+.card {
+  border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+  border-radius: var(--radius);
+  padding: var(--gap);
+  margin-bottom: var(--gap);
+}
+/* 使用中のアカウントは枠をアクセント色にする */
+.card.current { border-color: var(--vscode-focusBorder); }
+/* 切り替えられるカードは押せることが分かるよう、カーソルとホバー時の背景を変える */
+.card.clickable { cursor: pointer; }
+.card.clickable:hover { background: var(--vscode-list-hoverBackground); }
+
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--gap); }
+.name { font-weight: bold; }
+.email { margin: 2px 0 var(--gap); word-break: break-all; }
+.muted { color: var(--vscode-descriptionForeground); font-size: var(--font-small); }
+.err { color: var(--vscode-errorForeground); font-size: var(--font-small); margin-top: 4px; }
+
+.bar-row { margin-top: 6px; }
+.bar-head { display: flex; justify-content: space-between; font-size: var(--font-small); }
+.track {
+  height: var(--bar-height);
+  border-radius: calc(var(--bar-height) / 2);
+  background: var(--vscode-input-background);
+  overflow: hidden;
+  margin-top: 2px;
+}
+.fill { height: 100%; background: var(--vscode-progressBar-background); }
+.fill.warn { background: var(--vscode-editorWarning-foreground); }
+.fill.error { background: var(--vscode-errorForeground); }
+
+.busy { color: var(--vscode-editorWarning-foreground); font-size: var(--font-small); margin-bottom: var(--gap); }
+
+.actions { display: flex; flex-direction: column; gap: 6px; margin-top: var(--gap); }
+
+button {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: none;
+  border-radius: 2px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-family: inherit;
+}
+button:hover:not(:disabled) { background: var(--vscode-button-hoverBackground); }
+button:disabled { opacity: 0.5; cursor: default; }
+button.secondary {
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+button.secondary:hover:not(:disabled) { background: var(--vscode-button-secondaryHoverBackground); }

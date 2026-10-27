@@ -1,0 +1,48 @@
+{
+  "name": "claude-account-switcher",
+  "displayName": "Claude アカウント切替",
+  "description": "Claude Code のログインアカウントをサイドバーからワンクリックで切り替え、各アカウントの残量（5時間枠・週枠）を表示する（ローカル用）",
+  "version": "0.2.3",
+  "publisher": "local",
+  "license": "MIT",
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Other"],
+  "main": "./extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        { "id": "claudeAccount", "title": "Claude アカウント", "icon": "media/icon.svg" }
+      ]
+    },
+    "views": {
+      "claudeAccount": [
+        { "type": "webview", "id": "claudeAccount.view", "name": "アカウント" }
+      ]
+    },
+    "commands": [
+      { "command": "claudeAccount.open", "title": "Claude: アカウント画面を開く" },
+      { "command": "claudeAccount.pick", "title": "Claude: アカウントを切り替え" },
+      { "command": "claudeAccount.quickSwitch", "title": "Claude: アカウントをすぐ切り替え（2つなら即切替）" },
+      { "command": "claudeAccount.add", "title": "Claude: アカウントを追加" },
+      { "command": "claudeAccount.register", "title": "Claude: 今のアカウントを登録" },
+      { "command": "claudeAccount.refreshUsage", "title": "Claude: 残量を更新" }
+    ],
+    "configuration": {
+      "title": "Claude アカウント切替",
+      "properties": {
+        "claudeAccount.usage.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "残量（5時間枠・週枠）を取得して表示する。非公式 API を使うため、気になる場合はオフにする"
+        },
+        "claudeAccount.usage.intervalMinutes": {
+          "type": "number",
+          "default": 5,
+          "minimum": 2,
+          "description": "残量を取得する間隔（分）。起動中、毎時この倍数の分（既定 5 → :00, :05, :10 …）に ±20 秒ずらして取得する。2 未満は 2 として扱う"
+        }
+      }
+    }
+  }
+}

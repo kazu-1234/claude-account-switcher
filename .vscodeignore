@@ -1,0 +1,5 @@
+.git/**
+.githooks/**
+.gitignore
+version_history.txt
+*.vsix
