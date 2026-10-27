@@ -2,7 +2,7 @@
   "name": "claude-account-switcher",
   "displayName": "Claude アカウント切替",
   "description": "Claude Code のログインアカウントをサイドバーからワンクリックで切り替え、各アカウントの残量（5時間枠・週枠）を表示する（ローカル用）",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "publisher": "local",
   "license": "MIT",
   "engines": { "vscode": "^1.90.0" },
@@ -26,7 +26,8 @@
       { "command": "claudeAccount.quickSwitch", "title": "Claude: アカウントをすぐ切り替え（2つなら即切替）" },
       { "command": "claudeAccount.add", "title": "Claude: アカウントを追加" },
       { "command": "claudeAccount.register", "title": "Claude: 今のアカウントを登録" },
-      { "command": "claudeAccount.refreshUsage", "title": "Claude: 残量を更新" }
+      { "command": "claudeAccount.refreshUsage", "title": "Claude: 残量を更新" },
+      { "command": "claudeAccount.checkUpdate", "title": "Claude: 拡張の更新を確認" }
     ],
     "configuration": {
       "title": "Claude アカウント切替",
@@ -41,6 +42,11 @@
           "default": 5,
           "minimum": 2,
           "description": "残量を取得する間隔（分）。起動中、毎時この倍数の分（既定 5 → :00, :05, :10 …）に ±20 秒ずらして取得する。2 未満は 2 として扱う"
+        },
+        "claudeAccount.update.autoCheck": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "起動時に GitHub Releases の新しい版を確認し、あれば通知する（6 時間に 1 回まで）。\n\n[今すぐ更新を確認](command:claudeAccount.checkUpdate)"
         }
       }
     }

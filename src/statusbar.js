@@ -1,7 +1,7 @@
 // ステータスバー（VS Code 右下）の表示
 //
 // 項目 1: 現在のアカウント（例「登録1」）… クリックで切替（登録 2 つなら即切替、3 つ以上なら一覧）
-// 項目 2: 現在アカウントの残量（例「5時間 32% · 1週間 18%」）… ツールチップに全登録の残量
+// 項目 2: 現在アカウントの残量（例「3時間52分 32% · 1週間(金曜) 18%」）… ツールチップに全登録の残量
 // メールアドレスはここには一切出さない（拡張のサイドバー内だけで表示する方針）。
 
 const vscode = require('vscode');
@@ -25,6 +25,28 @@ function create(context, switchCommand, openCommand) {
 
 function pctText(u) { return u ? `${Math.round(u.pct)}%` : '--'; }
 
+// リセット時刻（ISO 文字列）を Date に。無い・読めない・過去なら null（表示を従来の固定ラベルに戻すため）
+function resetDate(u) {
+  if (!u || !u.resetsAt) return null;
+  const d = new Date(u.resetsAt);
+  return d.getTime() > Date.now() ? d : null;
+}
+
+// 5時間枠のラベル: リセットまでの残り時間「3時間52分」「45分」。分からなければ「5時間」
+function fiveHourLabel(u) {
+  const d = resetDate(u);
+  if (!d) return '5時間';
+  const min = Math.floor((d.getTime() - Date.now()) / 60000);
+  const h = Math.floor(min / 60), m = min % 60;
+  return h > 0 ? `${h}時間${m}分` : `${m}分`;
+}
+
+// 週枠のラベル: リセットされる曜日を付けて「1週間(金曜)」。分からなければ「1週間」
+function weeklyLabel(u) {
+  const d = resetDate(u);
+  return d ? `1週間(${C.WEEKDAYS[d.getDay()]}曜)` : '1週間';
+}
+
 // 使用率の高い方に合わせて背景色を変える（ステータスバーで使えるのは warning / error の 2 色だけ）
 function colorFor(entry) {
   const max = Math.max(entry?.fiveHour?.pct ?? 0, entry?.weekly?.pct ?? 0);
@@ -40,7 +62,8 @@ function update(cache, usageEnabled) {
 
   if (!usageEnabled) { usageItem.hide(); return; }
   const e = cache[cur];
-  usageItem.text = `$(pulse) 5時間 ${pctText(e?.fiveHour)} · 1週間 ${pctText(e?.weekly)}`;
+  // 例「3時間52分 32% · 1週間(金曜) 18%」（5時間枠は残り時間、週枠はリセット曜日をラベルにする）
+  usageItem.text = `$(pulse) ${fiveHourLabel(e?.fiveHour)} ${pctText(e?.fiveHour)} · ${weeklyLabel(e?.weekly)} ${pctText(e?.weekly)}`;
   usageItem.backgroundColor = colorFor(e);
 
   // ツールチップ: 全登録の残量を一覧で（登録N だけで表示）

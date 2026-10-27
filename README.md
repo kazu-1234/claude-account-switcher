@@ -4,9 +4,13 @@ VS Code / Cursor 内の Claude Code のログインアカウントを、サイ�
 
 ## できること
 - 左のアクティビティバーのアイコンからパネルを開き、「登録1」「登録2」…のカードの［切替］またはカードの枠を押して切り替え
-- 各アカウントの残量（5時間枠・週枠の使用率とリセットまでの時間）を表示
+- 各アカウントの残量（5時間枠・週枠の使用率とリセットまでの時間・更新時刻／曜日）を表示
+  - 例: `5時間 32%  あと 3時間12分（15:40 更新）`、`週 18%  あと 2日4時間（金 14:00 更新）`
 - 右下のステータスバーの「登録N」を押しても切替（登録が 2 つなら即切替、3 つ以上なら一覧から選択）
-- 右下のステータスバーに、使用中アカウントの名前と残量（`5時間 32% · 1週間 18%`）を常時表示
+- 右下のステータスバーに、使用中アカウントの名前と残量（`3時間52分 32% · 1週間(金曜) 18%`）を常時表示
+  - 5時間枠はリセットまでの残り時間、週枠はリセットされる曜日を表示
+- 起動時に GitHub Releases の新しい版を確認し、［更新］で .vsix をダウンロードしてインストール（設定は保持）
+  - 手動確認: コマンド「Claude: 拡張の更新を確認」、または設定画面の「今すぐ更新を確認」リンク
 - 切替後はウィンドウを自動で再読み込み（他に開いている VS Code / Cursor のウィンドウも追従）
 - Claude が処理中なら「強制再起動／処理が終わってから再起動／キャンセル」を選択
 - メールアドレスはサイドバー内だけに表示し、ステータスバーなどには出しません
@@ -24,8 +28,8 @@ Claude Code のログイン情報（`~/.claude/.credentials.json` と `~/.claude
 ## インストール
 ```
 npx @vscode/vsce package
-code --install-extension claude-account-switcher-0.2.3.vsix
-cursor --install-extension claude-account-switcher-0.2.3.vsix
+code --install-extension claude-account-switcher-0.3.0.vsix
+cursor --install-extension claude-account-switcher-0.3.0.vsix
 ```
 
 ## 設定
@@ -33,6 +37,7 @@ cursor --install-extension claude-account-switcher-0.2.3.vsix
 |---|---|---|
 | `claudeAccount.usage.enabled` | `true` | 残量の取得・表示 |
 | `claudeAccount.usage.intervalMinutes` | `5` | 取得間隔（分、最小 2）。起動中、毎時この倍数の分に ±20 秒ずらして取得 |
+| `claudeAccount.update.autoCheck` | `true` | 起動時に新しい版を確認して通知（6 時間に 1 回まで） |
 
 ## 免責事項
 - 本拡張は Anthropic 社とは無関係の非公式ツールです。

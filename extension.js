@@ -6,6 +6,7 @@
 //   src/busy.js      … Claude が処理中かどうかの判定
 //   src/statusbar.js … 右下のステータスバー表示
 //   src/sidebar.js   … サイドバーのパネル
+//   src/update.js    … GitHub Releases からの自動更新
 // このファイルはそれらを結線し、「切替 → 必要なら3択 → 再読み込み」の流れを担当する。
 
 const vscode = require('vscode');
@@ -16,6 +17,7 @@ const A = require('./src/accounts');
 const U = require('./src/usage');
 const B = require('./src/busy');
 const statusbar = require('./src/statusbar');
+const update = require('./src/update');
 const { SidebarProvider } = require('./src/sidebar');
 
 // ===== 調整値 =====
@@ -269,6 +271,8 @@ function activate(context) {
     vscode.commands.registerCommand('claudeAccount.add', doAdd),
     vscode.commands.registerCommand('claudeAccount.register', doRegister),
     vscode.commands.registerCommand('claudeAccount.refreshUsage', () => refreshUsage(true)),
+    // 手動の更新確認（コマンドパレット・設定画面のリンクから呼ばれる）
+    vscode.commands.registerCommand('claudeAccount.checkUpdate', () => update.check(context, true)),
     vscode.workspace.onDidChangeConfiguration(e => {
       // 間隔が変わったら次の定時を計算し直す
       if (e.affectsConfiguration('claudeAccount')) { refreshUI(); refreshUsage(false); scheduleUsage(); }
@@ -285,11 +289,16 @@ function activate(context) {
 
   // サイドバーが見えている間だけ「処理中」表示を更新する（見えていないときはファイル走査しない）
   const busyTimer = setInterval(() => { if (sidebar.view?.visible) sidebar.post(); }, BUSY_TICK_MS);
-  context.subscriptions.push({ dispose: () => { clearTimeout(usageTimer); clearInterval(busyTimer); } });
+  // ステータスバーの「残り 3時間52分」は時間とともに減るので、定期的に描き直す（キャッシュを読むだけ）
+  const statusTimer = setInterval(() => {
+    try { statusbar.update(U.loadCache(), usageEnabled()); } catch { /* 表示だけなので無視 */ }
+  }, C.STATUS_TICK_MS);
+  context.subscriptions.push({ dispose: () => { clearTimeout(usageTimer); clearInterval(busyTimer); clearInterval(statusTimer); } });
 
   refreshUI();
   refreshUsage(false); // 起動直後: 前回の取得から間隔以上経っていれば 1 回だけ取得
   scheduleUsage();     // 以降は起動中だけ、毎時 5 の倍数分 ±20 秒に取得
+  update.check(context, false); // 起動時の更新確認（設定オフ・前回確認から間もない場合は何もしない）
 }
 
 function deactivate() {}

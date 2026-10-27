@@ -9,20 +9,33 @@
   const WARN_PERCENT = 80;
   const ERROR_PERCENT = 95;
   const TICK_MS = 30 * 1000; // 「あと◯時間」表示を描き直す間隔
+  const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']; // Date.getDay() の 0=日 … 6=土
   // ==================
 
   let state = null;
 
-  // リセットまでの残り時間を「あと 3時間12分」「あと 2日5時間」の形にする
-  function untilText(iso) {
+  // 時刻を「15:40」の形に（2 桁ゼロ埋め）
+  function hhmm(date) {
+    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  }
+
+  // リセットまでの残り時間と更新時刻を
+  //   5時間枠: 「あと 3時間12分（15:40 更新）」
+  //   週枠   : 「あと 2日5時間（金 14:00 更新）」（withWeekday = true のとき曜日を付ける）
+  // の形にする。
+  function untilText(iso, withWeekday) {
     if (!iso) return '';
-    const ms = new Date(iso).getTime() - Date.now();
+    const at = new Date(iso);
+    const ms = at.getTime() - Date.now();
     if (!(ms > 0)) return 'まもなくリセット';
     const min = Math.floor(ms / 60000);
     const d = Math.floor(min / 1440), h = Math.floor((min % 1440) / 60), m = min % 60;
-    if (d > 0) return `あと ${d}日${h}時間`;
-    if (h > 0) return `あと ${h}時間${m}分`;
-    return `あと ${m}分`;
+    let left;
+    if (d > 0) left = `あと ${d}日${h}時間`;
+    else if (h > 0) left = `あと ${h}時間${m}分`;
+    else left = `あと ${m}分`;
+    const when = withWeekday ? `${WEEKDAYS[at.getDay()]} ${hhmm(at)}` : hhmm(at);
+    return `${left}（${when} 更新）`;
   }
 
   function level(pct) {
@@ -32,7 +45,8 @@
   }
 
   // 使用率バー 1 本分の要素を作る（textContent を使い、HTML として解釈させない）
-  function bar(title, u) {
+  //   withWeekday … true なら更新時刻に曜日を付ける（週枠用）
+  function bar(title, u, withWeekday) {
     const row = document.createElement('div');
     row.className = 'bar-row';
     const head = document.createElement('div');
@@ -41,7 +55,7 @@
     left.textContent = `${title} ${u ? Math.round(u.pct) + '%' : '--'}`;
     const right = document.createElement('span');
     right.className = 'muted';
-    right.textContent = u ? untilText(u.resetsAt) : '';
+    right.textContent = u ? untilText(u.resetsAt, withWeekday) : '';
     head.append(left, right);
 
     const track = document.createElement('div');
@@ -104,7 +118,7 @@
       card.append(email);
 
       if (state.usageEnabled && !s.pending) {
-        card.append(bar('5時間', s.usage?.fiveHour), bar('週', s.usage?.weekly));
+        card.append(bar('5時間', s.usage?.fiveHour, false), bar('週', s.usage?.weekly, true));
         if (s.usage?.error) {
           const err = document.createElement('div');
           err.className = 'err';

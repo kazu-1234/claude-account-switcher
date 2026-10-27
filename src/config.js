@@ -33,6 +33,10 @@ const LABEL_PREFIX = '登録';          // スロット "1" → 「登録1」
 const STATUS_PRIORITY = 1000;         // ステータスバー右側での並び順（大きいほど左寄り）
 const WARN_PERCENT = 80;              // この使用率以上で警告色
 const ERROR_PERCENT = 95;             // この使用率以上でエラー色
+// 残り時間は時間とともに減るので、ステータスバーをこの間隔で描き直す（キャッシュを読むだけで API は叩かない）
+const STATUS_TICK_MS = 60 * 1000;
+// 週枠のリセット曜日の表記（Date.getDay() の 0=日 … 6=土 に対応）
+const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
 // ===== 残量 API（非公式。Claude Code 本体が使っているもの） =====
 const USAGE_URL = 'https://api.anthropic.com/api/oauth/usage';
@@ -57,6 +61,14 @@ const BACKOFF_MAX_MIN = 60;           // 失敗が続いたときの最大待ち
 const TOKEN_EXPIRY_MARGIN_MS = 60 * 1000; // 期限の 1 分前から「切れた」とみなす
 const LOCK_STALE_MS = 60 * 1000;      // これより古いロックは残骸とみなして消す
 
+// ===== 自動更新（GitHub Releases） =====
+// 最新リリースの情報を返す GitHub API。tag_name（例 "v0.3.0"）と assets（.vsix の URL）を使う
+const UPDATE_API_URL = 'https://api.github.com/repos/kazu-1234/claude-account-switcher/releases/latest';
+// GitHub API は User-Agent ヘッダが無いと拒否するので、拡張名を名乗る
+const UPDATE_USER_AGENT = 'claude-account-switcher';
+// 起動時の自動確認はこの時間に 1 回まで（複数ウィンドウでの重複と、無認証 API の 60 回/時 制限対策）
+const UPDATE_CHECK_INTERVAL_HOURS = 6;
+
 // ===== 処理中判定 =====
 // 会話ログ（*.jsonl）が直近 BUSY_SECONDS 秒以内に書き込まれていれば「Claude が処理中」とみなす
 const BUSY_SECONDS = 8;
@@ -72,7 +84,8 @@ const WATCH_INTERVAL_MS = 1500;       // ファイル変化の確認間隔（fs.
 module.exports = {
   CLAUDE_DIR, CRED_FILE, STATE_FILE, PROJECTS_DIR,
   ACCOUNTS_DIR, CURRENT_FILE, USAGE_CACHE_FILE, REFRESH_LOCK_FILE, SWITCH_EVENT_FILE,
-  LABEL_PREFIX, STATUS_PRIORITY, WARN_PERCENT, ERROR_PERCENT,
+  LABEL_PREFIX, STATUS_PRIORITY, WARN_PERCENT, ERROR_PERCENT, STATUS_TICK_MS, WEEKDAYS,
+  UPDATE_API_URL, UPDATE_USER_AGENT, UPDATE_CHECK_INTERVAL_HOURS,
   USAGE_URL, OAUTH_BETA, TOKEN_URLS, OAUTH_CLIENT_ID, HTTP_TIMEOUT_MS,
   USAGE_INTERVAL_MIN_DEFAULT, USAGE_INTERVAL_MIN_FLOOR, SCHEDULE_JITTER_SEC, SHARED_FRESH_SEC, BACKOFF_MAX_MIN,
   TOKEN_EXPIRY_MARGIN_MS, LOCK_STALE_MS,
