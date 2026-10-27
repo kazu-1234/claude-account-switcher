@@ -7,6 +7,7 @@
 //   src/statusbar.js … 右下のステータスバー表示
 //   src/sidebar.js   … サイドバーのパネル
 //   src/update.js    … GitHub Releases からの自動更新
+//   src/resume.js    … 切替後に直前の会話を開き直す（会話の引継ぎ）
 // このファイルはそれらを結線し、「切替 → 必要なら3択 → 再読み込み」の流れを担当する。
 
 const vscode = require('vscode');
@@ -18,6 +19,7 @@ const U = require('./src/usage');
 const B = require('./src/busy');
 const statusbar = require('./src/statusbar');
 const update = require('./src/update');
+const resume = require('./src/resume');
 const { SidebarProvider } = require('./src/sidebar');
 
 // ===== 調整値 =====
@@ -29,6 +31,7 @@ let sidebar;
 let switching = false;   // 切替処理中（ボタン連打防止）
 let refreshing = false;  // 残量取得中
 let extVersion = '';     // この拡張の版（package.json の version）。サイドバーの設定の枠に表示する
+let extContext = null;   // activate で受け取る context。切替前に会話 ID を workspaceState へ保存するのに使う
 const activatedAt = Date.now();
 
 // ---------- 設定（settings.json で上書き可能） ----------
@@ -44,6 +47,13 @@ function autoUpdateEnabled() {
 // 書き込むと onDidChangeConfiguration が発火し、サイドバーが描き直される
 function setAutoUpdate(value) {
   return vscode.workspace.getConfiguration('claudeAccount').update('update.autoCheck', !!value, vscode.ConfigurationTarget.Global);
+}
+function resumeEnabled() {
+  return vscode.workspace.getConfiguration('claudeAccount').get('resume.enabled', true);
+}
+// サイドバーのチェックボックスから「切替後に直前の会話を引き継ぐ」を切り替える（setAutoUpdate と同じく Global）
+function setResume(value) {
+  return vscode.workspace.getConfiguration('claudeAccount').update('resume.enabled', !!value, vscode.ConfigurationTarget.Global);
 }
 function usageIntervalMin() {
   const v = vscode.workspace.getConfiguration('claudeAccount').get('usage.intervalMinutes', C.USAGE_INTERVAL_MIN_DEFAULT);
@@ -64,6 +74,7 @@ function getState() {
     refreshing,
     updatedAt: times.length ? Math.max(...times) : 0,
     autoUpdate: autoUpdateEnabled(),
+    resume: resumeEnabled(),
     version: extVersion
   };
 }
@@ -149,6 +160,13 @@ function announceSwitch(slot) {
   }));
 }
 
+// 再読み込みの直前に、このウィンドウで最後に使っていた会話を覚えておく（設定オフなら何もしない）。
+// 再読み込み後の activate で resume.restore がそれを開き直すので、前の内容を持ったまま続けられる
+async function rememberSession() {
+  if (!resumeEnabled() || !extContext) return;
+  try { await resume.remember(extContext); } catch { /* 覚えられなくても切替は続ける */ }
+}
+
 function reloadWindow() {
   // 再読み込みで拡張ホストごと Claude Code が起動し直し、新しいログイン情報を読み込む
   return vscode.commands.executeCommand('workbench.action.reloadWindow');
@@ -168,6 +186,7 @@ async function doSwitch(slot) {
     vscode.window.showErrorMessage(`切替に失敗しました: ${e.message}`);
     return;
   }
+  await rememberSession();
   await reloadWindow();
 }
 
@@ -238,7 +257,7 @@ function watch(context, file, onChange) {
   context.subscriptions.push({ dispose: () => fs.unwatchFile(file, listener) });
 }
 
-function onSwitchEvent() {
+async function onSwitchEvent() {
   let ev;
   try { ev = JSON.parse(A.readText(C.SWITCH_EVENT_FILE)); } catch { return; }
   // 自分が出した合図・このウィンドウ起動前の古い合図には反応しない
@@ -246,6 +265,8 @@ function onSwitchEvent() {
   // 処理中かどうかは切替元のウィンドウで全ウィンドウ分まとめて確認済みなので、ここではすぐ再読み込みする
   // （古いアカウントのまま動き続けると、トークン更新時に古いログイン情報で上書きされてしまうため）
   switching = true;
+  // 追従するウィンドウも、それぞれ自分のワークスペースの会話を覚えてから再読み込みする
+  await rememberSession();
   reloadWindow();
 }
 
@@ -260,6 +281,7 @@ function onCredentialChange() {
 
 function activate(context) {
   extVersion = context.extension.packageJSON.version;
+  extContext = context;
   // 起動時に一度同期（初回は今のアカウントを「登録1」として自動登録）
   try { A.sync(); } catch { /* ログイン情報が無い・読めない場合は未登録表示のまま */ }
 
@@ -275,6 +297,7 @@ function activate(context) {
       else if (msg.type === 'refresh') refreshUsage(true);
       else if (msg.type === 'checkUpdate') update.check(context, true);
       else if (msg.type === 'setAutoUpdate') setAutoUpdate(msg.value);
+      else if (msg.type === 'setResume') setResume(msg.value);
     }
   });
 
@@ -314,6 +337,8 @@ function activate(context) {
   refreshUsage(false); // 起動直後: 前回の取得から間隔以上経っていれば 1 回だけ取得
   scheduleUsage();     // 以降は起動中だけ、毎時 5 の倍数分 ±20 秒に取得
   update.check(context, false); // 起動時の更新確認（設定オフ・前回確認から間もない場合は何もしない）
+  // 切替による再読み込みの直後なら、直前の会話を開き直す（設定オフなら覚えていた情報を消すだけ）
+  resume.restore(context, resumeEnabled());
 }
 
 function deactivate() {}

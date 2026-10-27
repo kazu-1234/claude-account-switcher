@@ -2,7 +2,7 @@
   "name": "claude-account-switcher",
   "displayName": "Claude アカウント切替",
   "description": "Claude Code のログインアカウントをサイドバーからワンクリックで切り替え、各アカウントの残量（5時間枠・週枠）を表示する（ローカル用）",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "local",
   "license": "MIT",
   "engines": { "vscode": "^1.90.0" },
@@ -47,6 +47,11 @@
           "type": "boolean",
           "default": true,
           "markdownDescription": "起動時に GitHub Releases の新しい版を確認し、あれば通知する（6 時間に 1 回まで）。\n\n[今すぐ更新を確認](command:claudeAccount.checkUpdate)"
+        },
+        "claudeAccount.resume.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "アカウント切替で再読み込みしたあと、直前に使っていた会話を自動で開き直し、これまでの内容を持ったまま続けられるようにする"
         }
       }
     }

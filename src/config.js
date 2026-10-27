@@ -78,6 +78,20 @@ const IDLE_SECONDS = 15;
 const WAIT_POLL_MS = 1000;            // 待機中の確認間隔
 const SCAN_DEPTH = 3;                 // projects 配下を何階層まで探すか（サブエージェントのログ用）
 
+// ===== 会話の引継ぎ（切替後に直前の会話を開き直す） =====
+// Claude Code 拡張の ID。activate() で起動を待ってから会話を開く
+const CLAUDE_CODE_EXT_ID = 'anthropic.claude-code';
+// Claude Code 拡張が公式に用意している URI ハンドラ（?session=<ID> で過去の会話を再開）。
+// 先頭のスキーム（vscode / cursor …）は vscode.env.uriScheme で付けるので、ここにはパスだけ書く
+const RESUME_URI_PATH = 'anthropic.claude-code/open';
+// Claude 拡張の起動後、会話を開くまで待つ時間。
+// 開いてから約 3 秒以内に再読み込みされると「開けなかった」と記録される仕様なので、起動直後の混雑を避けて余裕を持たせる
+const RESUME_DELAY_MS = 4000;
+// 切替前に保存した「開き直す会話」の有効期限。これより古い情報では開かない（関係ない起動で勝手に開かないため）
+const RESUME_MAX_AGE_MS = 2 * 60 * 1000;
+// 会話ログの先頭からこのバイト数だけ読み、作業フォルダ（cwd）がこのワークスペースか確かめる
+const RESUME_HEAD_BYTES = 64 * 1024;
+
 // ===== 監視 =====
 const WATCH_INTERVAL_MS = 1500;       // ファイル変化の確認間隔（fs.watchFile のポーリング）
 
@@ -90,5 +104,6 @@ module.exports = {
   USAGE_INTERVAL_MIN_DEFAULT, USAGE_INTERVAL_MIN_FLOOR, SCHEDULE_JITTER_SEC, SHARED_FRESH_SEC, BACKOFF_MAX_MIN,
   TOKEN_EXPIRY_MARGIN_MS, LOCK_STALE_MS,
   BUSY_SECONDS, IDLE_SECONDS, WAIT_POLL_MS, SCAN_DEPTH,
+  CLAUDE_CODE_EXT_ID, RESUME_URI_PATH, RESUME_DELAY_MS, RESUME_MAX_AGE_MS, RESUME_HEAD_BYTES,
   WATCH_INTERVAL_MS
 };

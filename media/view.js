@@ -136,6 +136,7 @@
 
     // 設定の枠: チェックボックスは拡張側の設定値に合わせる（settings.json 側で変えた場合も追従）
     $('autoUpdate').checked = !!state.autoUpdate;
+    $('resume').checked = !!state.resume;
     $('version').textContent = state.version ? `現在の版: v${state.version}` : '';
   }
 
@@ -148,6 +149,7 @@
   $('checkUpdate').addEventListener('click', () => vscode.postMessage({ type: 'checkUpdate' }));
   // 切り替えたら拡張へ送って settings.json に保存してもらう
   $('autoUpdate').addEventListener('change', e => vscode.postMessage({ type: 'setAutoUpdate', value: e.target.checked }));
+  $('resume').addEventListener('change', e => vscode.postMessage({ type: 'setResume', value: e.target.checked }));
 
   setInterval(render, TICK_MS);
   vscode.postMessage({ type: 'ready' }); // 準備できたので最初の state を要求

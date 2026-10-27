@@ -13,6 +13,7 @@ VS Code / Cursor 内の Claude Code のログインアカウントを、サイ�
   - 手動確認: サイドバー下部の「設定」枠の［更新を確認］、コマンド「Claude: 拡張の更新を確認」、または設定画面の「今すぐ更新を確認」リンク
   - 起動時の自動確認のオン／オフは「設定」枠のチェックボックスでも切替可能
 - 切替後はウィンドウを自動で再読み込み（他に開いている VS Code / Cursor のウィンドウも追従）
+- 再読み込み後は直前に使っていた会話を自動で開き直し、これまでの内容を持ったまま新しいアカウントで続けられる（「設定」枠のチェックボックスでオン／オフ）
 - Claude が処理中なら「強制再起動／処理が終わってから再起動／キャンセル」を選択
 - メールアドレスはサイドバー内だけに表示し、ステータスバーなどには出しません
 
@@ -29,8 +30,8 @@ Claude Code のログイン情報（`~/.claude/.credentials.json` と `~/.claude
 ## インストール
 ```
 npx @vscode/vsce package
-code --install-extension claude-account-switcher-0.3.0.vsix
-cursor --install-extension claude-account-switcher-0.3.0.vsix
+code --install-extension claude-account-switcher-0.4.0.vsix
+cursor --install-extension claude-account-switcher-0.4.0.vsix
 ```
 
 ## 設定
@@ -39,6 +40,7 @@ cursor --install-extension claude-account-switcher-0.3.0.vsix
 | `claudeAccount.usage.enabled` | `true` | 残量の取得・表示 |
 | `claudeAccount.usage.intervalMinutes` | `5` | 取得間隔（分、最小 2）。起動中、毎時この倍数の分に ±20 秒ずらして取得 |
 | `claudeAccount.update.autoCheck` | `true` | 起動時に新しい版を確認して通知（6 時間に 1 回まで） |
+| `claudeAccount.resume.enabled` | `true` | 切替後に直前の会話を自動で開き直す（会話の引継ぎ） |
 
 ## 免責事項
 - 本拡張は Anthropic 社とは無関係の非公式ツールです。
