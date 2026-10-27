@@ -50,6 +50,19 @@ body {
 
 .actions { display: flex; flex-direction: column; gap: 6px; margin-top: var(--gap); }
 
+/* 設定の枠: 上に区切り線を入れて、アカウント操作と分ける */
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: calc(var(--gap) * 2);
+  padding-top: var(--gap);
+  border-top: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+}
+.section-title { font-weight: bold; }
+.toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.toggle input { margin: 0; accent-color: var(--vscode-button-background); }
+
 button {
   background: var(--vscode-button-background);
   color: var(--vscode-button-foreground);

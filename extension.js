@@ -28,12 +28,22 @@ const BUSY_TICK_MS = 3000;         // サイドバー表示中に「処理中」
 let sidebar;
 let switching = false;   // 切替処理中（ボタン連打防止）
 let refreshing = false;  // 残量取得中
+let extVersion = '';     // この拡張の版（package.json の version）。サイドバーの設定の枠に表示する
 const activatedAt = Date.now();
 
 // ---------- 設定（settings.json で上書き可能） ----------
 
 function usageEnabled() {
   return vscode.workspace.getConfiguration('claudeAccount').get('usage.enabled', true);
+}
+function autoUpdateEnabled() {
+  return vscode.workspace.getConfiguration('claudeAccount').get('update.autoCheck', true);
+}
+// サイドバーのチェックボックスから「起動時に更新を自動確認」を切り替える。
+// Global（ユーザー設定）に書くので全ウィンドウ・全ワークスペース共通になる。
+// 書き込むと onDidChangeConfiguration が発火し、サイドバーが描き直される
+function setAutoUpdate(value) {
+  return vscode.workspace.getConfiguration('claudeAccount').update('update.autoCheck', !!value, vscode.ConfigurationTarget.Global);
 }
 function usageIntervalMin() {
   const v = vscode.workspace.getConfiguration('claudeAccount').get('usage.intervalMinutes', C.USAGE_INTERVAL_MIN_DEFAULT);
@@ -52,7 +62,9 @@ function getState() {
     busy: B.isBusy(),
     switching,
     refreshing,
-    updatedAt: times.length ? Math.max(...times) : 0
+    updatedAt: times.length ? Math.max(...times) : 0,
+    autoUpdate: autoUpdateEnabled(),
+    version: extVersion
   };
 }
 
@@ -247,6 +259,7 @@ function onCredentialChange() {
 // ---------- 起動・終了 ----------
 
 function activate(context) {
+  extVersion = context.extension.packageJSON.version;
   // 起動時に一度同期（初回は今のアカウントを「登録1」として自動登録）
   try { A.sync(); } catch { /* ログイン情報が無い・読めない場合は未登録表示のまま */ }
 
@@ -260,6 +273,8 @@ function activate(context) {
       else if (msg.type === 'add') doAdd();
       else if (msg.type === 'register') doRegister();
       else if (msg.type === 'refresh') refreshUsage(true);
+      else if (msg.type === 'checkUpdate') update.check(context, true);
+      else if (msg.type === 'setAutoUpdate') setAutoUpdate(msg.value);
     }
   });
 

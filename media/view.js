@@ -133,6 +133,10 @@
     $('refresh').hidden = !state.usageEnabled;
     $('refresh').disabled = !!state.refreshing;
     $('updated').textContent = state.updatedAt ? `残量更新: ${new Date(state.updatedAt).toLocaleTimeString()}` : '';
+
+    // 設定の枠: チェックボックスは拡張側の設定値に合わせる（settings.json 側で変えた場合も追従）
+    $('autoUpdate').checked = !!state.autoUpdate;
+    $('version').textContent = state.version ? `現在の版: v${state.version}` : '';
   }
 
   window.addEventListener('message', e => {
@@ -141,6 +145,9 @@
   $('add').addEventListener('click', () => vscode.postMessage({ type: 'add' }));
   $('register').addEventListener('click', () => vscode.postMessage({ type: 'register' }));
   $('refresh').addEventListener('click', () => vscode.postMessage({ type: 'refresh' }));
+  $('checkUpdate').addEventListener('click', () => vscode.postMessage({ type: 'checkUpdate' }));
+  // 切り替えたら拡張へ送って settings.json に保存してもらう
+  $('autoUpdate').addEventListener('change', e => vscode.postMessage({ type: 'setAutoUpdate', value: e.target.checked }));
 
   setInterval(render, TICK_MS);
   vscode.postMessage({ type: 'ready' }); // 準備できたので最初の state を要求

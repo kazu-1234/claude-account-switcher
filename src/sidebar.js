@@ -4,6 +4,7 @@
 // 拡張側 ⇔ ページ側は postMessage でやり取りする:
 //   拡張 → ページ: { type: 'state', ... } 表示データ一式
 //   ページ → 拡張: { type: 'switch', slot } / { type: 'add' } / { type: 'register' } / { type: 'refresh' } / { type: 'ready' }
+//                  { type: 'checkUpdate' } / { type: 'setAutoUpdate', value }（設定の枠）
 
 const vscode = require('vscode');
 const crypto = require('crypto');
@@ -55,6 +56,13 @@ class SidebarProvider {
     <button id="refresh" class="secondary">残量を更新</button>
   </div>
   <div id="updated" class="muted"></div>
+  <!-- 設定の枠: 拡張の更新に関する操作をまとめる -->
+  <div class="settings">
+    <div class="section-title">設定</div>
+    <label class="toggle"><input type="checkbox" id="autoUpdate"> 起動時に更新を自動確認</label>
+    <button id="checkUpdate" class="secondary">更新を確認</button>
+    <div id="version" class="muted"></div>
+  </div>
   <script nonce="${nonce}" src="${media('view.js')}"></script>
 </body>
 </html>`;
